@@ -1,6 +1,6 @@
 {
-  "name": "audio-player",
-  "version": "1.0.0",
+  "name": "@keithalpichi/audio-player",
+  "version": "0.0.1",
   "main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"type": "module",
