@@ -2,16 +2,25 @@
   "name": "@keithalpichi/audio-player",
   "version": "0.0.1",
   "main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"type": "module",
+  "types": "dist/index.d.ts",
+  "type": "module",
   "scripts": {
-		"build": "tsc"
+    "build": "tsc"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "keith alpichi",
+  "license": "MIT",
+  "description": "An audio player built with Web Audio APIs to load and playback many audio files. This library does not provide a user interface, only a class and methods to perform the features of an audio player.",
   "dependencies": {
     "typescript": "^5.5.4"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keithalpichi/audio-player.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keithalpichi/audio-player/issues"
+  },
+  "homepage": "https://github.com/keithalpichi/audio-player#readme"
 }
