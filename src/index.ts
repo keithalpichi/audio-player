@@ -1,9 +1,11 @@
+import { Tracklist } from "./tracklistLinkedList"
+
 export type Track = {
 	arrayBuffer: ArrayBuffer
 	id: string
 }
 
-type AudioPlayerTrack = Omit<Track, 'arrayBuffer'> & {
+export type AudioPlayerTrack = Omit<Track, 'arrayBuffer'> & {
 	buffer: AudioBuffer
 	position: number
 }
@@ -11,7 +13,7 @@ type AudioPlayerTrack = Omit<Track, 'arrayBuffer'> & {
 export default class AudioPlayer {
 	private _context: AudioContext | undefined = undefined
 	private _hasPermissions: boolean = false
-	private _track: AudioPlayerTrack | undefined
+	private _trackList = new Tracklist({ trackLimit: 3 })
 	private _bufferSource: AudioBufferSourceNode | undefined
 	get hasPermissions(): boolean {
 		return this._hasPermissions
@@ -55,7 +57,7 @@ export default class AudioPlayer {
 			throw err
 		}
 	}
-	async load(track: Track) {
+	private async _load(track: Track, { placement }: { placement: "FRONT" | "REAR" }) {
 		if (!this.initialized) {
 			await this.initialize()
 		}
@@ -65,38 +67,55 @@ export default class AudioPlayer {
 			id: track.id,
 			position: 0
 		}
-		this._track = audioPlayerTrack
+		if (placement === "FRONT") {
+			this._trackList.addToFront(audioPlayerTrack)
+		} else {
+			this._trackList.addToRear(audioPlayerTrack)
+		}
+	}
+	async load(track: Track) {
+		return this._load(track, { placement: "FRONT" })
+	}
+	async loadToRear(track: Track) {
+		return this._load(track, { placement: "REAR" })
 	}
 	clear() {
-		this._track = undefined
+		this._trackList.clear()
 	}
 	async play() {
-		if (!this._track) {
+		const currentTrack = this._trackList.currentTrack
+		if (!currentTrack) {
 			return
 		}
 		if (!this.initialized) {
 			await this.initialize()
 		}
 		this._bufferSource = new AudioBufferSourceNode(this._context!, {
-			buffer: this._track.buffer,
+			buffer: currentTrack.buffer,
 		});
 		this._bufferSource.connect(this._context!.destination);
 		this._bufferSource.start();
 	}
 	pause() {
-		if (this._track && this._context) {
-			this._track.position = this._context.currentTime
+		const currentTrack = this._trackList.currentTrack
+		if (currentTrack && this._context) {
+			currentTrack.position = this._context.currentTime
 		}
 		this._bufferSource?.stop()
 	}
 	stop() {
-		if (this._track) {
-			this._track.position = 0 // reset track position back to zero
+		const currentTrack = this._trackList.currentTrack
+		if (currentTrack) {
+			currentTrack.position = 0 // reset track position back to zero
 		}
 		this._bufferSource = undefined
 	}
-	skipForward() {}
-	skipBackward() {}
+	skipForward() {
+		this._trackList.moveCurrentForward()
+	}
+	skipBackward() {
+		this._trackList.moveCurrentBack()
+	}
 	mute() {}
 	setVolume(amount: number) {}
 	maxVolume() {}
