@@ -55,6 +55,10 @@ npm i
 npm run build
 ```
 
+## Contributing
+
+If you're interested in proposing changes or have issues please browse the [issues](https://github.com/keithalpichi/audio-player/issues) page to see if it exists already. If not consider opening a new issue.
+
 ## Roadmap
 
-1. load audio from `audio` elements
+TBD
