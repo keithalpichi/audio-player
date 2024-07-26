@@ -26,24 +26,27 @@ audioPlayer.initialize()
 const response = await fetch('https://localhost:443/song.wav');
 // convert the response to an ArrayBuffer
 const arrayBuffer = await response.arrayBuffer();
-// load the buffer into the audio player.
+// load the buffer into the audio player and await the promise to resolve
 await audioPlayer.load({ id: 'song.wav', arrayBuffer })
 // play the sound
-await audioPlayer.play()
+audioPlayer.play()
+// audio player keeps track of the current audio file.
+// invoking .play() plays the sound again.
+audioPlayer.play()
 
 // load more audio into the player and play them
-await audioPlayer.skipForward()
-await audioPlayer.play()
+audioPlayer.skipForward()
+audioPlayer.play()
 
 // go back to the previous audio file
-await audioPlayer.skipBackward()
-await audioPlayer.play()
+audioPlayer.skipBackward()
+audioPlayer.play()
 
 // mute audio
-await audioPlayer.mute()
+audioPlayer.mute()
 
 // unmute audio back to the last known volume
-await audioPlayer.unmute()
+audioPlayer.unmute()
 ```
 
 ## Development
