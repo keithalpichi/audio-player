@@ -107,8 +107,6 @@ export class Tracklist {
 			this.current = this.current.next
 			moves++
 		}
-		console.log(this.tracks)
-		console.log(this.current?.track.id)
 	}
 
 	moveCurrentBack(by: number = 1) {

@@ -1,4 +1,5 @@
 import { Tracklist } from "./tracklistLinkedList"
+import Volume from './volume'
 
 export type Track = {
 	arrayBuffer: ArrayBuffer
@@ -15,13 +16,20 @@ export default class AudioPlayer {
 	private _hasPermissions: boolean = false
 	private _trackList = new Tracklist({ trackLimit: 3 })
 	private _bufferSource: AudioBufferSourceNode | undefined
+	private _volume: Volume | undefined = undefined
 	get hasPermissions(): boolean {
 		return this._hasPermissions
 	}
 	get initialized(): boolean {
 		return Boolean(this._context) && this.hasPermissions
 	}
-	constructor() {
+
+	get isMuted(): boolean {
+		return this.volume().isMuted
+	}
+
+	get currentVolume(): number {
+		return this.volume().currentVolume
 	}
 	private decodeAudioData(arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
 		if (!this.initialized) {
@@ -39,14 +47,25 @@ export default class AudioPlayer {
 			);
 		})
 	}
-	async initialize() {
+	private context(): AudioContext {
 		if (!this._context) {
 			this._context = new AudioContext()
 		}
-		if (!this.hasPermissions) {
-			await this.requestPermissions()
-		}
+		return this._context
 	}
+	private volume(): Volume {
+		if (!this._volume) {
+			const context = this.context()
+			this._volume = new Volume({ context })
+		}
+		return this._volume
+	}
+	async initialize() {
+		this.context()
+		this.volume()
+		await this.requestPermissions()
+	}
+
 	private async requestPermissions() {
 		if (this.hasPermissions) {
 			return
@@ -93,7 +112,7 @@ export default class AudioPlayer {
 		this._bufferSource = new AudioBufferSourceNode(this._context!, {
 			buffer: currentTrack.buffer,
 		});
-		this._bufferSource.connect(this._context!.destination);
+		this._bufferSource.connect(this.volume().gainNode).connect(this._context!.destination);
 		this._bufferSource.start();
 	}
 	pause() {
@@ -116,7 +135,16 @@ export default class AudioPlayer {
 	skipBackward() {
 		this._trackList.moveCurrentBack()
 	}
-	mute() {}
-	setVolume(amount: number) {}
-	maxVolume() {}
+	mute() {
+		this.volume().mute()
+	}
+	unmute() {
+		this.volume().unmute()
+	}
+	setVolume(percent: number) {
+		this.volume().set(percent)
+	}
+	maxVolume() {
+		this.volume().set(1)
+	}
 }

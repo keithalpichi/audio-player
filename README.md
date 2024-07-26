@@ -6,6 +6,7 @@ An audio player built with Web Audio APIs to load and playback many audio files.
 This library supports:
 1. loading audio files as AudioBuffers
 1. playback via the `.play()`, `.pause()`, `.stop()`, `.skipForward()`, and `.skipBackward()` methods
+1. volume control via the `.mute()`, `.unmute()`, `.setVolume()`, and `.maxVolume()` methods
 1. Typescript
 
 ## Installation
@@ -33,6 +34,12 @@ await audioPlayer.play()
 // load more audio into the player and play them
 await audioPlayer.skipForward()
 await audioPlayer.play()
+
+// mute audio
+await audioPlayer.mute()
+
+// unmute audio back to the last known volume
+await audioPlayer.unmute()
 ```
 
 ## Development
@@ -43,5 +50,4 @@ npm run build
 
 ## Roadmap
 
-1. volume control via the `.mute()`, `.setVolume()`, and `.maxVolume()` methods
 1. load audio from `audio` elements
