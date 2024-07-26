@@ -60,25 +60,15 @@ export default class AudioPlayer {
 		}
 		return this._volume
 	}
-	async initialize() {
+
+	initialize() {
 		this.context()
 		this.volume()
-		await this.requestPermissions()
 	}
 
-	private async requestPermissions() {
-		if (this.hasPermissions) {
-			return
-		}
-		try {
-			await navigator.mediaDevices.getUserMedia({ audio: true });
-		} catch (err) {
-			throw err
-		}
-	}
 	private async _load(track: Track, { placement }: { placement: "FRONT" | "REAR" }) {
 		if (!this.initialized) {
-			await this.initialize()
+			this.initialize()
 		}
 		const buffer = await this.decodeAudioData(track.arrayBuffer)
 		const audioPlayerTrack: AudioPlayerTrack = {
@@ -101,13 +91,13 @@ export default class AudioPlayer {
 	clear() {
 		this._trackList.clear()
 	}
-	async play() {
+	play() {
 		const currentTrack = this._trackList.currentTrack
 		if (!currentTrack) {
 			return
 		}
 		if (!this.initialized) {
-			await this.initialize()
+			this.initialize()
 		}
 		this._bufferSource = new AudioBufferSourceNode(this._context!, {
 			buffer: currentTrack.buffer,
