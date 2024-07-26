@@ -35,6 +35,10 @@ await audioPlayer.play()
 await audioPlayer.skipForward()
 await audioPlayer.play()
 
+// go back to the previous audio file
+await audioPlayer.skipBackward()
+await audioPlayer.play()
+
 // mute audio
 await audioPlayer.mute()
 
