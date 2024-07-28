@@ -16,7 +16,7 @@ export default class AudioPlayer {
 	private _trackList = new Tracklist({ trackLimit: 3 })
 	private _bufferSource: AudioBufferSourceNode | undefined
 	private _volume: Volume | undefined = undefined
-	private _pausedTime: number = -1
+	private startTime: number = 0
 	public state: "PLAYING" | "PAUSED" | "STOPPED" = "STOPPED"
 	get isMuted(): boolean {
 		return this.volume().isMuted
@@ -77,25 +77,33 @@ export default class AudioPlayer {
 	play() {
 		const currentTrack = this._trackList.currentTrack
 		if (!currentTrack) {
+			// there is no track to play
 			return
 		}
 		if (this.state === "PLAYING") {
+			// we're already playing
 			return
 		}
 		const context = this.context()
 		if (context.state === 'suspended') {
+			// update the context back to a playable state
 			context.resume();
 		}
+		// we have to create a new buffer source node everytime
 		this._bufferSource = new AudioBufferSourceNode(context, {
 			buffer: currentTrack.buffer,
 		});
+		// connect the buffer source node to the volume and stereo output for sound
 		this._bufferSource.connect(this.volume().gainNode).connect(context.destination);
-		const startAt = this._pausedTime === -1 ? 0 : this._pausedTime
-		this._bufferSource.start(0, startAt);
+		// When playback ends, update the player state to stopped and
+		// if we're still in playing state, reset the start time
 		this._bufferSource.addEventListener('ended', () => {
+			if (this.state === "PLAYING") {
+				this.startTime = 0
+			}
 			this.state = "STOPPED"
 		})
-		this._pausedTime = -1
+		this._bufferSource.start(0, this.startTime);
 		this.state = "PLAYING"
 	}
 	pause() {
@@ -103,13 +111,18 @@ export default class AudioPlayer {
 			return
 		}
 		if (this.state === "PLAYING") {
-			this._pausedTime = this.context().currentTime
+			// get the current time at the time we pause
+			// we use this value if playback resumes
+			this.startTime = this.context().currentTime
 		}
+		// stop the buffer source from playing audio
 		this._bufferSource?.stop();
 		this.state = "PAUSED"
 	}
 	stop() {
-		this._pausedTime = -1
+		// reset the start time
+		this.startTime = 0
+		// stop the buffer source from playing audio
 		this._bufferSource?.stop();
 		this.state = "STOPPED"
 	}
