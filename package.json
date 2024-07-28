@@ -5,17 +5,21 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "husky"
+		
   },
   "keywords": [],
   "author": "keith alpichi",
   "license": "MIT",
   "description": "An audio player built with Web Audio APIs to load and playback many audio files. This library does not provide a user interface, only a class and methods to perform the features of an audio player.",
-  "dependencies": {
-  },
   "devDependencies": {
+    "eslint-config-prettier": "^9.1.0",
+    "husky": "^9.1.3",
+    "lint-staged": "^15.2.7",
+    "prettier": "3.3.3",
     "typescript": "^5.5.4"
-	},
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/keithalpichi/audio-player.git"
@@ -23,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/keithalpichi/audio-player/issues"
   },
-  "homepage": "https://github.com/keithalpichi/audio-player#readme"
+  "homepage": "https://github.com/keithalpichi/audio-player#readme",
+  "lint-staged": {
+    "*.{ts,js,md}": "prettier --write --ignore-unknown"
+  }
 }
