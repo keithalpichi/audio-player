@@ -13,17 +13,13 @@ export type AudioPlayerTrack = Omit<Track, 'arrayBuffer'> & {
 
 export default class AudioPlayer {
 	private _context: AudioContext | undefined = undefined
-	private _hasPermissions: boolean = false
 	private _trackList = new Tracklist({ trackLimit: 3 })
 	private _bufferSource: AudioBufferSourceNode | undefined
 	private _volume: Volume | undefined = undefined
 	private _pausedTime: number = -1
 	public state: "PLAYING" | "PAUSED" | "STOPPED" = "STOPPED"
-	get hasPermissions(): boolean {
-		return this._hasPermissions
-	}
 	get initialized(): boolean {
-		return Boolean(this._context) && this.hasPermissions
+		return Boolean(this._context) && Boolean(this._volume)
 	}
 
 	get isMuted(): boolean {
