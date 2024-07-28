@@ -99,18 +99,24 @@ export default class AudioPlayer {
 		if (!this.initialized) {
 			this.initialize()
 		}
-		this._bufferSource = new AudioBufferSourceNode(this._context!, {
+		const context = this.context()
+		if (context.state === 'suspended') {
+			context.resume();
+		}
+		this._bufferSource = new AudioBufferSourceNode(context, {
 			buffer: currentTrack.buffer,
 		});
-		this._bufferSource.connect(this.volume().gainNode).connect(this._context!.destination);
+		this._bufferSource.connect(this.volume().gainNode).connect(context.destination);
 		this._bufferSource.start();
 	}
 	pause() {
-		const currentTrack = this._trackList.currentTrack
-		if (currentTrack && this._context) {
-			currentTrack.position = this._context.currentTime
+		const context = this.context()
+		switch (context.state) {
+			case 'running':
+				context.suspend()
+			default:
+			return;
 		}
-		this._bufferSource?.stop()
 	}
 	stop() {
 		const currentTrack = this._trackList.currentTrack
