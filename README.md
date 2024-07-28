@@ -20,8 +20,6 @@ npm i @keithalpichi/audio-player
 import AudioPlayer from '@keithalpichi/audio-player'
 // create an audio player instance
 const audioPlayer = new AudioPlayer();
-// initialize the player. You should call this after a user gesture but before any other methods.
-audioPlayer.initialize()
 // get an audio file from a server using fetch
 const response = await fetch('https://localhost:443/song.wav');
 // convert the response to an ArrayBuffer

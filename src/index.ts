@@ -18,10 +18,6 @@ export default class AudioPlayer {
 	private _volume: Volume | undefined = undefined
 	private _pausedTime: number = -1
 	public state: "PLAYING" | "PAUSED" | "STOPPED" = "STOPPED"
-	get initialized(): boolean {
-		return Boolean(this._context) && Boolean(this._volume)
-	}
-
 	get isMuted(): boolean {
 		return this.volume().isMuted
 	}
@@ -30,11 +26,8 @@ export default class AudioPlayer {
 		return this.volume().currentVolume
 	}
 	private decodeAudioData(arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
-		if (!this.initialized) {
-			this.initialize()
-		}
 		return new Promise((res, rej) => {
-			this._context!.decodeAudioData(
+			this.context().decodeAudioData(
 				arrayBuffer,
 				(buffer: AudioBuffer) => {
 					res(buffer)
@@ -59,15 +52,7 @@ export default class AudioPlayer {
 		return this._volume
 	}
 
-	initialize() {
-		this.context()
-		this.volume()
-	}
-
 	private async _load(track: Track, { placement }: { placement: "FRONT" | "REAR" }) {
-		if (!this.initialized) {
-			this.initialize()
-		}
 		const buffer = await this.decodeAudioData(track.arrayBuffer)
 		const audioPlayerTrack: AudioPlayerTrack = {
 			buffer,
@@ -93,9 +78,6 @@ export default class AudioPlayer {
 		const currentTrack = this._trackList.currentTrack
 		if (!currentTrack) {
 			return
-		}
-		if (!this.initialized) {
-			this.initialize()
 		}
 		if (this.state === "PLAYING") {
 			return
