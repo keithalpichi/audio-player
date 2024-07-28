@@ -17,6 +17,8 @@ export default class AudioPlayer {
 	private _trackList = new Tracklist({ trackLimit: 3 })
 	private _bufferSource: AudioBufferSourceNode | undefined
 	private _volume: Volume | undefined = undefined
+	private _pausedTime: number = -1
+	public state: "PLAYING" | "PAUSED" | "STOPPED" = "STOPPED"
 	get hasPermissions(): boolean {
 		return this._hasPermissions
 	}
@@ -99,6 +101,9 @@ export default class AudioPlayer {
 		if (!this.initialized) {
 			this.initialize()
 		}
+		if (this.state === "PLAYING") {
+			return
+		}
 		const context = this.context()
 		if (context.state === 'suspended') {
 			context.resume();
@@ -107,23 +112,28 @@ export default class AudioPlayer {
 			buffer: currentTrack.buffer,
 		});
 		this._bufferSource.connect(this.volume().gainNode).connect(context.destination);
-		this._bufferSource.start();
+		const startAt = this._pausedTime === -1 ? 0 : this._pausedTime
+		this._bufferSource.start(0, startAt);
+		this._bufferSource.addEventListener('ended', () => {
+			this.state = "STOPPED"
+		})
+		this._pausedTime = -1
+		this.state = "PLAYING"
 	}
 	pause() {
-		const context = this.context()
-		switch (context.state) {
-			case 'running':
-				context.suspend()
-			default:
-			return;
+		if (this.state === "PAUSED") {
+			return
 		}
+		if (this.state === "PLAYING") {
+			this._pausedTime = this.context().currentTime
+		}
+		this._bufferSource?.stop();
+		this.state = "PAUSED"
 	}
 	stop() {
-		const currentTrack = this._trackList.currentTrack
-		if (currentTrack) {
-			currentTrack.position = 0 // reset track position back to zero
-		}
-		this._bufferSource = undefined
+		this._pausedTime = -1
+		this._bufferSource?.stop();
+		this.state = "STOPPED"
 	}
 	skipForward() {
 		this._trackList.moveCurrentForward()
