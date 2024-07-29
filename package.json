@@ -1,13 +1,12 @@
 {
   "name": "@keithalpichi/audio-player",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "prepare": "husky"
-		
   },
   "keywords": [],
   "author": "keith alpichi",
