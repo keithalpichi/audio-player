@@ -45,7 +45,6 @@ export default class AudioSource {
 
   play() {
     if (this.state === "PLAYING") {
-      console.log("here");
       // we're already playing
       return;
     }
@@ -54,7 +53,6 @@ export default class AudioSource {
     const bufferSourceNode = this.load(this._buffer);
     // start playing at the playhead
     bufferSourceNode.start(0, this._playHead);
-    // console.log(this._bufferSourceNode);
     this.state = "PLAYING";
   }
 
