@@ -1,5 +1,6 @@
 import { Tracklist } from "./tracklistLinkedList";
 import Volume from "./volume";
+import AudioSource from "./audioSource";
 
 export type Track = {
   arrayBuffer: ArrayBuffer;
@@ -8,16 +9,13 @@ export type Track = {
 
 export type AudioPlayerTrack = Omit<Track, "arrayBuffer"> & {
   buffer: AudioBuffer;
-  position: number;
 };
 
 export default class AudioPlayer {
   private _context: AudioContext | undefined = undefined;
   private _trackList = new Tracklist({ trackLimit: 3 });
-  private _bufferSource: AudioBufferSourceNode | undefined;
+  private _loadedAudio: AudioSource | undefined;
   private _volume: Volume | undefined = undefined;
-  private startTime: number = 0;
-  public state: "PLAYING" | "PAUSED" | "STOPPED" = "STOPPED";
   get isMuted(): boolean {
     return this.volume().isMuted;
   }
@@ -51,6 +49,17 @@ export default class AudioPlayer {
     }
     return this._volume;
   }
+  private audioSource(): AudioSource {
+    if (!this._loadedAudio) {
+      const emptyBuffer = new AudioBuffer({ length: 1, sampleRate: 44100 });
+      this._loadedAudio = new AudioSource({
+        context: this.context(),
+        buffer: emptyBuffer,
+        gainNode: this.volume().gainNode,
+      });
+    }
+    return this._loadedAudio;
+  }
 
   private async _load(
     track: Track,
@@ -60,7 +69,6 @@ export default class AudioPlayer {
     const audioPlayerTrack: AudioPlayerTrack = {
       buffer,
       id: track.id,
-      position: 0,
     };
     if (placement === "FRONT") {
       this._trackList.addToFront(audioPlayerTrack);
@@ -83,59 +91,37 @@ export default class AudioPlayer {
       // there is no track to play
       return;
     }
-    if (this.state === "PLAYING") {
-      // we're already playing
-      return;
-    }
     const context = this.context();
     if (context.state === "suspended") {
       // update the context back to a playable state
       context.resume();
     }
-    // we have to create a new buffer source node everytime
-    this._bufferSource = new AudioBufferSourceNode(context, {
-      buffer: currentTrack.buffer,
-    });
-    // connect the buffer source node to the volume and stereo output for sound
-    this._bufferSource
-      .connect(this.volume().gainNode)
-      .connect(context.destination);
-    // When playback ends, update the player state to stopped and
-    // if we're still in playing state, reset the start time
-    this._bufferSource.addEventListener("ended", () => {
-      if (this.state === "PLAYING") {
-        this.startTime = 0;
-      }
-      this.state = "STOPPED";
-    });
-    this._bufferSource.start(0, this.startTime);
-    this.state = "PLAYING";
-  }
-  pause() {
-    if (this.state === "PAUSED") {
+    const audioSource = this.audioSource();
+    if (audioSource.state === "PLAYING") {
+      // we're already playing
       return;
     }
-    if (this.state === "PLAYING") {
-      // get the current time at the time we pause
-      // we use this value if playback resumes
-      this.startTime = this.context().currentTime;
-    }
-    // stop the buffer source from playing audio
-    this._bufferSource?.stop();
-    this.state = "PAUSED";
+    // load the audio buffer and play it now
+    audioSource.load(currentTrack.buffer);
+    audioSource.play();
+  }
+  pause() {
+    this.audioSource().pause();
   }
   stop() {
-    // reset the start time
-    this.startTime = 0;
-    // stop the buffer source from playing audio
-    this._bufferSource?.stop();
-    this.state = "STOPPED";
+    this.audioSource().stop();
   }
   skipForward() {
-    this._trackList.moveCurrentForward();
+    const track = this._trackList.moveCurrentForward();
+    if (track) {
+      this.audioSource().load(track.buffer);
+    }
   }
   skipBackward() {
-    this._trackList.moveCurrentBack();
+    const track = this._trackList.moveCurrentBack();
+    if (track) {
+      this.audioSource().load(track.buffer);
+    }
   }
   mute() {
     this.volume().mute();
