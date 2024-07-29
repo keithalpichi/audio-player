@@ -101,20 +101,22 @@ export class Tracklist {
     this.tracks += 1;
   }
 
-  moveCurrentForward(by: number = 1) {
+  moveCurrentForward(by: number = 1): TrackNode["track"] | null {
     let moves = 0;
     while (this.current && this.current.next && moves < by) {
       this.current = this.current.next;
       moves++;
     }
+    return this.current?.track || null;
   }
 
-  moveCurrentBack(by: number = 1) {
+  moveCurrentBack(by: number = 1): TrackNode["track"] | null {
     let moves = 0;
     while (this.current && this.current.prev && moves < by) {
       this.current = this.current.prev;
       moves++;
     }
+    return this.current?.track || null;
   }
 
   removeRear(): void {
