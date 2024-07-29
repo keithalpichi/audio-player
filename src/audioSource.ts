@@ -75,10 +75,6 @@ export default class AudioSource {
   }
 
   stop() {
-    if (this.state === "STOPPED") {
-      // we're already stopped
-      return;
-    }
     // reset the start time
     this._playHead = 0;
     // stop the buffer source from playing audio
