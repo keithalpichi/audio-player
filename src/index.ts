@@ -91,11 +91,6 @@ export default class AudioPlayer {
       // there is no track to play
       return;
     }
-    const context = this.context();
-    if (context.state === "suspended") {
-      // update the context back to a playable state
-      context.resume();
-    }
     const audioSource = this.audioSource();
     if (audioSource.state === "PLAYING") {
       // we're already playing
