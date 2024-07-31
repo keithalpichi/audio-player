@@ -39,16 +39,6 @@ export default class AudioSource {
     this.state = state;
   }
 
-  load(buffer: AudioBuffer): AudioBufferSourceNode {
-    this._buffer = buffer;
-    this._bufferSourceNode = this.createBufferSourceNode(buffer);
-    this._bufferSourceNode
-      .connect(this._gainNode)
-      .connect(this._context.destination);
-    this._bufferSourceNode.addEventListener("ended", this.ended.bind(this));
-    return this._bufferSourceNode;
-  }
-
   private ended() {
     switch (this.state) {
       case "SEEKING":
@@ -69,6 +59,16 @@ export default class AudioSource {
       case undefined:
         break;
     }
+  }
+
+  load(buffer: AudioBuffer): AudioBufferSourceNode {
+    this._buffer = buffer;
+    this._bufferSourceNode = this.createBufferSourceNode(buffer);
+    this._bufferSourceNode
+      .connect(this._gainNode)
+      .connect(this._context.destination);
+    this._bufferSourceNode.addEventListener("ended", this.ended.bind(this));
+    return this._bufferSourceNode;
   }
 
   play() {
