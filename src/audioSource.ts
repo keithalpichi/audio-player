@@ -14,6 +14,9 @@ export default class AudioSource {
   private _gainNode: GainNode;
   private _playHead: number = 0;
   public state: AudioSourceState = "STOPPED";
+  get duration(): number {
+    return this._buffer.duration;
+  }
   constructor({
     context,
     buffer,
