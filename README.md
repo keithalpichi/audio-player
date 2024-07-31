@@ -7,7 +7,7 @@ A browser audio player built with Typescript and Web Audio APIs to load and play
 This library supports:
 
 1. loading many audio files as AudioBuffers. Audio is loaded into the player via the `.load()` and `loadToRear()` methods. The track list acts as a doubly linked-list. The play head can move forward and back through this track list.
-1. playback via the `.play()`, `.pause()`, `.stop()`, `.skipForward()`, and `.skipBackward()` methods. The latter two methods will only skip as far as there is loaded audio.
+1. playback via the `.play()`, `.pause()`, `.stop()`, `.seek()`, `.seekAndPlay()`, `.skipForward()`, and `.skipBackward()` methods. The latter two methods will only skip as far as there is loaded audio.
 1. volume control via the `.mute()`, `.unmute()`, `.setVolume()`, and `.maxVolume()` methods. If the volume is changed while it is muted, the audio player will not unmute. When it is unmuted, volume will be set to the last known value. That is the value prior to muting or any volumes provided to `.setVolume()` or `.maxVolume()`.
 1. Typescript
 
@@ -34,6 +34,11 @@ audioPlayer.play();
 // audio player keeps track of the current audio file.
 // invoking .play() plays the sound again.
 audioPlayer.play();
+
+// seek to a specific point in time but pause playback
+audioPlayer.seek(1.23);
+// seek to a specific point in time and resume playing immediately
+audioPlayer.seekAndPlay(1.23);
 
 // load more audio into the player and play them
 audioPlayer.skipForward();
