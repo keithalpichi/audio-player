@@ -23,6 +23,11 @@ export default class AudioPlayer {
   get currentVolume(): number {
     return this.volume().currentVolume;
   }
+
+  get currentTime(): number {
+    return this.context().currentTime;
+  }
+
   private decodeAudioData(arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
     return new Promise((res, rej) => {
       this.context().decodeAudioData(
