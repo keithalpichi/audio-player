@@ -35,10 +35,17 @@ audioPlayer.play();
 // invoking .play() plays the sound again.
 audioPlayer.play();
 
+// pause the audio
+audioPlayer.pause();
+// get the current time
+const currentTime = audioPlayer.currentTime;
 // seek to a specific point in time but pause playback
-audioPlayer.seek(1.23);
+audioPlayer.seek(currentTime + 1.0);
 // seek to a specific point in time and resume playing immediately
-audioPlayer.seekAndPlay(1.23);
+audioPlayer.seekAndPlay(currentTime + 1.0);
+
+// stop playback. The time on the audio resets to zero seconds.
+audioPlayer.stop();
 
 // load more audio into the player and play them
 audioPlayer.skipForward();
