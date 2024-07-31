@@ -4,7 +4,8 @@ type AudioSourceState =
   | "PAUSING"
   | "STOPPED"
   | "STOPPING"
-  | "SEEKING";
+  | "SEEKING"
+  | "SEEKINGTHENPLAY";
 
 export default class AudioSource {
   private _context: AudioContext;
@@ -51,6 +52,9 @@ export default class AudioSource {
   private ended() {
     switch (this.state) {
       case "SEEKING":
+        this.setCurrentState("PAUSED");
+        break;
+      case "SEEKINGTHENPLAY":
         this.play();
         break;
       case "PAUSING":
@@ -104,11 +108,14 @@ export default class AudioSource {
   }
 
   seek(to: number) {
-    if (this.state !== "PLAYING") {
-      // we're not playing, return
-      return;
-    }
     this.setCurrentState("SEEKING");
+    this._playHead = to;
+    this._context.destination.disconnect();
+    this._bufferSourceNode.stop();
+  }
+
+  seekAndPlay(to: number) {
+    this.setCurrentState("SEEKINGTHENPLAY");
     this._playHead = to;
     this._context.destination.disconnect();
     this._bufferSourceNode.stop();
