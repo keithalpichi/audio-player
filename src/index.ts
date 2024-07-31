@@ -106,6 +106,9 @@ export default class AudioPlayer {
   stop() {
     this.audioSource().stop();
   }
+  seek(to: number) {
+    this.audioSource().seek(to);
+  }
   skipForward() {
     const track = this._trackList.moveCurrentForward();
     if (track) {

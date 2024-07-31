@@ -1,4 +1,10 @@
-type AudioSourceState = "PLAYING" | "PAUSED" | "STOPPED";
+type AudioSourceState =
+  | "PLAYING"
+  | "PAUSED"
+  | "PAUSING"
+  | "STOPPED"
+  | "STOPPING"
+  | "SEEKING";
 
 export default class AudioSource {
   private _context: AudioContext;
@@ -28,19 +34,37 @@ export default class AudioSource {
     });
   }
 
+  private setCurrentState(state: AudioSourceState) {
+    this.state = state;
+  }
+
   load(buffer: AudioBuffer): AudioBufferSourceNode {
     this._buffer = buffer;
     this._bufferSourceNode = this.createBufferSourceNode(buffer);
     this._bufferSourceNode
       .connect(this._gainNode)
       .connect(this._context.destination);
-    this._bufferSourceNode.addEventListener("ended", () => {
-      if (this.state === "PLAYING") {
-        this._playHead = 0;
-      }
-      this.state = "STOPPED";
-    });
+    this._bufferSourceNode.addEventListener("ended", this.ended.bind(this));
     return this._bufferSourceNode;
+  }
+
+  private ended() {
+    switch (this.state) {
+      case "SEEKING":
+        this.play();
+        break;
+      case "PAUSING":
+        this.setCurrentState("PAUSED");
+        break;
+      case "STOPPING":
+        this.setCurrentState("STOPPED");
+        break;
+      case "PLAYING":
+        this.setCurrentState("STOPPED");
+        break;
+      case undefined:
+        break;
+    }
   }
 
   play() {
@@ -48,12 +72,11 @@ export default class AudioSource {
       // we're already playing
       return;
     }
-
     // create a new audio buffer source node with the current buffer
     const bufferSourceNode = this.load(this._buffer);
     // start playing at the playhead
     bufferSourceNode.start(0, this._playHead);
-    this.state = "PLAYING";
+    this.setCurrentState("PLAYING");
   }
 
   resume() {
@@ -61,24 +84,33 @@ export default class AudioSource {
   }
 
   pause() {
-    if (this.state === "PAUSED") {
+    if (this.state === "PAUSED" || this.state === "STOPPED") {
       return;
     }
-    if (this.state === "PLAYING") {
-      // get the current time at the time we pause
-      // we use this value if playback resumes
-      this._playHead = this._bufferSourceNode.context.currentTime;
-    }
+    this.setCurrentState("PAUSING");
+    this._playHead = this._context.currentTime;
     // stop the buffer source from playing audio
     this._bufferSourceNode.stop();
-    this.state = "PAUSED";
   }
 
   stop() {
-    // reset the start time
+    if (this.state === "STOPPED") {
+      return;
+    }
+    this.setCurrentState("STOPPING");
     this._playHead = 0;
     // stop the buffer source from playing audio
     this._bufferSourceNode.stop();
-    this.state = "STOPPED";
+  }
+
+  seek(to: number) {
+    if (this.state !== "PLAYING") {
+      // we're not playing, return
+      return;
+    }
+    this.setCurrentState("SEEKING");
+    this._playHead = to;
+    this._context.destination.disconnect();
+    this._bufferSourceNode.stop();
   }
 }
