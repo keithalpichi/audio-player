@@ -74,6 +74,16 @@ export default class AudioSource {
    */
   private _elapsed: number = 0;
   /**
+   * The .play method on a AudioBufferSourceNode can only
+   * be invoked once. Otherwise an error is thrown. This
+   * property remains false unless the .play has been invoked
+   * at most once.
+   *
+   * @private
+   * @type {boolean}
+   */
+  private _hasPlayed: boolean = false;
+  /**
    * The time on the AudioContext when the audio started to play
    * from the start or a recent pause. This property is important
    * to calculate total and percent elapsed time.
@@ -81,7 +91,7 @@ export default class AudioSource {
    * @private
    * @type {number}
    */
-  private _startedAt: number = 0;
+  private _elapsedTimer: number | null = null;
   /**
    * The duration of the audio buffer
    *
@@ -142,6 +152,9 @@ export default class AudioSource {
    */
   private setCurrentState(state: AudioSourceState) {
     this.state = state;
+    if (state === "PLAYING") {
+      this._hasPlayed = true;
+    }
     this.emitStateChange();
   }
 
@@ -163,18 +176,22 @@ export default class AudioSource {
     switch (this.state) {
       case "SEEKING":
         this.setCurrentState("PAUSED");
+        this.clearElapseTimer();
         break;
       case "SEEKINGTHENPLAY":
         this.play();
         break;
       case "PAUSING":
         this.setCurrentState("PAUSED");
+        this.clearElapseTimer();
         break;
       case "STOPPING":
         this.resetPlaybackState();
+        this.clearElapseTimer();
         break;
       case "PLAYING":
         this.resetPlaybackState();
+        this.clearElapseTimer();
         break;
       case undefined:
         break;
@@ -183,8 +200,21 @@ export default class AudioSource {
 
   private resetPlaybackState() {
     this.setCurrentState("STOPPED");
-    this._startedAt = 0;
     this._elapsed = 0;
+    this._hasPlayed = false;
+  }
+
+  private clearElapseTimer() {
+    this._elapsedTimer && clearInterval(this._elapsedTimer);
+  }
+
+  private trackElapsedTime() {
+    if (this._elapsedTimer) {
+      clearInterval(this._elapsedTimer);
+    }
+    this._elapsedTimer = setInterval(() => {
+      this._elapsed += 0.1;
+    }, 100);
   }
 
   get currentTime(): number {
@@ -223,11 +253,10 @@ export default class AudioSource {
     }
     // create a new audio buffer source node with the current buffer
     const bufferSourceNode = this.load(this._buffer);
-    // Use the AudioContext current time to track when the audio starts playing
-    this._startedAt = this._context.currentTime;
     // start playing at the playhead
     bufferSourceNode.start(0, this._elapsed);
     this.setCurrentState("PLAYING");
+    this.trackElapsedTime();
   }
 
   /** Resumes the audio source */
@@ -246,17 +275,8 @@ export default class AudioSource {
       return;
     }
     this.setCurrentState("PAUSING");
-    // Get the current time on the AudioContext
-    // to mark the time we're pausing
-    const pausedAt = this._context.currentTime;
     // stop the buffer source from playing audio
     this._bufferSourceNode.stop();
-    // Calculate elapsed time from when the audio was last started.
-    // The last time audio was played could have been from
-    // the start or a recent pause.
-    const elapsed = pausedAt - this._startedAt;
-    // Adjust the total time played by incrementing it by the elapsed time.
-    this._elapsed += elapsed;
   }
 
   /** Stops the audio source */
@@ -285,8 +305,10 @@ export default class AudioSource {
     }
     this.setCurrentState("SEEKING");
     this._elapsed = timeToSeekTo;
-    this._context.destination.disconnect();
-    this._bufferSourceNode.stop();
+    if (this._hasPlayed) {
+      this._context.destination.disconnect();
+      this._bufferSourceNode.stop();
+    }
   }
 
   /**
@@ -304,7 +326,11 @@ export default class AudioSource {
     }
     this.setCurrentState("SEEKINGTHENPLAY");
     this._elapsed = timeToSeekTo;
-    this._context.destination.disconnect();
-    this._bufferSourceNode.stop();
+    if (this._hasPlayed) {
+      this._context.destination.disconnect();
+      this._bufferSourceNode.stop();
+    } else {
+      this.play();
+    }
   }
 }
