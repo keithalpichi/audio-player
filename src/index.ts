@@ -110,7 +110,7 @@ export default class AudioPlayer {
    * @type {number}
    */
   get currentTime(): number {
-    return this.context().currentTime;
+    return this.audioSource().currentTime;
   }
 
   /**
@@ -121,6 +121,27 @@ export default class AudioPlayer {
    */
   get currentDuration(): number {
     return this.audioSource().duration;
+  }
+
+  /**
+   * Returns the percentage of time the audio has played. The value will range from
+   * zero to one. One meaning 100%.
+   *
+   * @readonly
+   * @type {number}
+   */
+  get percentComplete(): number {
+    return this.currentTime / this.currentDuration;
+  }
+
+  /**
+   * Returns the time left for the audio to reach the end.
+   *
+   * @readonly
+   * @type {number}
+   */
+  get timeLeft(): number {
+    return this.currentDuration - this.currentTime;
   }
 
   /**

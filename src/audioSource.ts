@@ -52,13 +52,6 @@ export default class AudioSource {
    */
   private _gainNode: GainNode;
   /**
-   * The play head keeps track of the time where audio should play from.
-   *
-   * @private
-   * @type {number}
-   */
-  private _playHead: number = 0;
-  /**
    * The state of the audio source.
    *
    * @public
@@ -73,6 +66,22 @@ export default class AudioSource {
    * @type {((state: AudioSourceState) => void) | null}
    */
   private onStateChanged: ((state: AudioSourceState) => void) | null = null;
+  /**
+   * The amount of time audio has been played
+   *
+   * @private
+   * @type {number}
+   */
+  private _elapsed: number = 0;
+  /**
+   * The time on the AudioContext when the audio started to play
+   * from the start or a recent pause. This property is important
+   * to calculate total and percent elapsed time.
+   *
+   * @private
+   * @type {number}
+   */
+  private _startedAt: number = 0;
   /**
    * The duration of the audio buffer
    *
@@ -162,14 +171,30 @@ export default class AudioSource {
         this.setCurrentState("PAUSED");
         break;
       case "STOPPING":
-        this.setCurrentState("STOPPED");
+        this.resetPlaybackState();
         break;
       case "PLAYING":
-        this.setCurrentState("STOPPED");
+        this.resetPlaybackState();
         break;
       case undefined:
         break;
     }
+  }
+
+  private resetPlaybackState() {
+    this.setCurrentState("STOPPED");
+    this._startedAt = 0;
+    this._elapsed = 0;
+  }
+
+  get currentTime(): number {
+    const { duration } = this._buffer;
+    if (this._elapsed > duration) {
+      // AudioContext time has surpassed the duration of the audio.
+      // So the elapsed time is the duration
+      return duration;
+    }
+    return this._elapsed;
   }
 
   /**
@@ -198,8 +223,10 @@ export default class AudioSource {
     }
     // create a new audio buffer source node with the current buffer
     const bufferSourceNode = this.load(this._buffer);
+    // Use the AudioContext current time to track when the audio starts playing
+    this._startedAt = this._context.currentTime;
     // start playing at the playhead
-    bufferSourceNode.start(0, this._playHead);
+    bufferSourceNode.start(0, this._elapsed);
     this.setCurrentState("PLAYING");
   }
 
@@ -210,22 +237,35 @@ export default class AudioSource {
 
   /** Pauses the audio source */
   pause() {
-    if (this.state === "PAUSED" || this.state === "STOPPED") {
+    if (
+      this.state === "PAUSED" ||
+      this.state === "PAUSING" ||
+      this.state === "STOPPING" ||
+      this.state === "STOPPED"
+    ) {
       return;
     }
     this.setCurrentState("PAUSING");
-    this._playHead = this._context.currentTime;
+    // Get the current time on the AudioContext
+    // to mark the time we're pausing
+    const pausedAt = this._context.currentTime;
     // stop the buffer source from playing audio
     this._bufferSourceNode.stop();
+    // Calculate elapsed time from when the audio was last started.
+    // The last time audio was played could have been from
+    // the start or a recent pause.
+    const elapsed = pausedAt - this._startedAt;
+    // Adjust the total time played by incrementing it by the elapsed time.
+    this._elapsed += elapsed;
   }
 
   /** Stops the audio source */
   stop() {
-    if (this.state === "STOPPED") {
+    if (this.state === "STOPPED" || this.state === "STOPPING") {
       return;
     }
     this.setCurrentState("STOPPING");
-    this._playHead = 0;
+    this._elapsed = 0;
     // stop the buffer source from playing audio
     this._bufferSourceNode.stop();
   }
@@ -237,8 +277,14 @@ export default class AudioSource {
    * @param {number} to
    */
   seek(to: number) {
+    let timeToSeekTo = to;
+    if (to > this._buffer.duration) {
+      timeToSeekTo = this._buffer.duration;
+    } else if (to < 0) {
+      timeToSeekTo = 0;
+    }
     this.setCurrentState("SEEKING");
-    this._playHead = to;
+    this._elapsed = timeToSeekTo;
     this._context.destination.disconnect();
     this._bufferSourceNode.stop();
   }
@@ -250,8 +296,14 @@ export default class AudioSource {
    * @param {number} to
    */
   seekAndPlay(to: number) {
+    let timeToSeekTo = to;
+    if (to > this._buffer.duration) {
+      timeToSeekTo = this._buffer.duration;
+    } else if (to < 0) {
+      timeToSeekTo = 0;
+    }
     this.setCurrentState("SEEKINGTHENPLAY");
-    this._playHead = to;
+    this._elapsed = timeToSeekTo;
     this._context.destination.disconnect();
     this._bufferSourceNode.stop();
   }
