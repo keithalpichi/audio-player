@@ -21,42 +21,45 @@ export type AudioSourceState =
  */
 export default class AudioSource {
   /**
-   * Description placeholder
+   * The AudioContext
    *
    * @private
    * @type {AudioContext}
    */
   private _context: AudioContext;
   /**
-   * Description placeholder
+   * The source of the audio. Playback on the source cannot
+   * be accomplish. It needs to be put into an AudioBufferSourceNode
    *
    * @private
    * @type {AudioBuffer}
    */
   private _buffer: AudioBuffer;
   /**
-   * Description placeholder
+   * The Web Audio AudioBufferSourceNode that contains
+   * APIs to play & stop the audio.
    *
    * @private
    * @type {AudioBufferSourceNode}
    */
   private _bufferSourceNode: AudioBufferSourceNode;
   /**
-   * Description placeholder
+   * The Web Audio GainNode the AudioBufferSourceNode will
+   * connect to in order to control volume.
    *
    * @private
    * @type {GainNode}
    */
   private _gainNode: GainNode;
   /**
-   * Description placeholder
+   * The play head keeps track of the time where audio should play from.
    *
    * @private
    * @type {number}
    */
   private _playHead: number = 0;
   /**
-   * Description placeholder
+   * The state of the audio source.
    *
    * @public
    * @type {AudioSourceState}
@@ -71,7 +74,7 @@ export default class AudioSource {
    */
   private onStateChanged: ((state: AudioSourceState) => void) | null = null;
   /**
-   * Description placeholder
+   * The duration of the audio buffer
    *
    * @readonly
    * @type {number}
@@ -80,7 +83,6 @@ export default class AudioSource {
     return this._buffer.duration;
   }
   /**
-   * Creates an instance of AudioSource.
    *
    * @constructor
    * @param {{
@@ -111,7 +113,7 @@ export default class AudioSource {
   }
 
   /**
-   * Description placeholder
+   * Creates an AudioBufferSourceNode with the AudioContext & AudioBuffer.
    *
    * @private
    * @param {AudioBuffer} buffer
@@ -124,7 +126,7 @@ export default class AudioSource {
   }
 
   /**
-   * Description placeholder
+   * Sets the current state
    *
    * @private
    * @param {AudioSourceState} state
@@ -134,12 +136,17 @@ export default class AudioSource {
     this.emitStateChange();
   }
 
+  /**
+   * Emits an event when the state changes
+   *
+   * @private
+   */
   private emitStateChange() {
     this.onStateChanged && this.onStateChanged(this.state);
   }
 
   /**
-   * Description placeholder
+   * Event callback invoked when the audio ends playback.
    *
    * @private
    */
@@ -166,7 +173,9 @@ export default class AudioSource {
   }
 
   /**
-   * Description placeholder
+   * Loads the AudioBuffer into a AudioBufferSourceNode,
+   * connects the gain & output nodes, and adds an event listener
+   * on the "ended" event.
    *
    * @param {AudioBuffer} buffer
    * @returns {AudioBufferSourceNode}
@@ -181,7 +190,7 @@ export default class AudioSource {
     return this._bufferSourceNode;
   }
 
-  /** Description placeholder */
+  /** Plays the audio source */
   play() {
     if (this.state === "PLAYING") {
       // we're already playing
@@ -194,12 +203,12 @@ export default class AudioSource {
     this.setCurrentState("PLAYING");
   }
 
-  /** Description placeholder */
+  /** Resumes the audio source */
   resume() {
     this.play();
   }
 
-  /** Description placeholder */
+  /** Pauses the audio source */
   pause() {
     if (this.state === "PAUSED" || this.state === "STOPPED") {
       return;
@@ -210,7 +219,7 @@ export default class AudioSource {
     this._bufferSourceNode.stop();
   }
 
-  /** Description placeholder */
+  /** Stops the audio source */
   stop() {
     if (this.state === "STOPPED") {
       return;
@@ -222,7 +231,8 @@ export default class AudioSource {
   }
 
   /**
-   * Description placeholder
+   * Seeks the playhead to a new time and
+   * pauses playback.
    *
    * @param {number} to
    */
@@ -234,7 +244,8 @@ export default class AudioSource {
   }
 
   /**
-   * Description placeholder
+   * Seeks the playhead to a new time and
+   * immediately resumes playback.
    *
    * @param {number} to
    */
