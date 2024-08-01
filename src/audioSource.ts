@@ -184,6 +184,7 @@ export default class AudioSource {
       case "PAUSING":
         this.setCurrentState("PAUSED");
         this.clearElapseTimer();
+        this._hasPlayed = false;
         break;
       case "STOPPING":
         this.resetPlaybackState();
