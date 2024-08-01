@@ -3,11 +3,11 @@
  *
  * @typedef {AudioSourceState}
  */
-type AudioSourceState =
+export type AudioSourceState =
   | "PLAYING"
   | "PAUSED"
-  | "PAUSING"
   | "STOPPED"
+  | "PAUSING"
   | "STOPPING"
   | "SEEKING"
   | "SEEKINGTHENPLAY";
@@ -62,6 +62,14 @@ export default class AudioSource {
    * @type {AudioSourceState}
    */
   public state: AudioSourceState = "STOPPED";
+
+  /**
+   * Event callback that provides the state of the audio source
+   *
+   * @private
+   * @type {((state: AudioSourceState) => void) | null}
+   */
+  private onStateChanged: ((state: AudioSourceState) => void) | null = null;
   /**
    * Description placeholder
    *
@@ -88,15 +96,18 @@ export default class AudioSource {
     context,
     buffer,
     gainNode,
+    onStateChanged,
   }: {
     context: AudioContext;
     buffer: AudioBuffer;
     gainNode: GainNode;
+    onStateChanged?: (state: AudioSourceState) => void;
   }) {
     this._buffer = buffer;
     this._context = context;
     this._gainNode = gainNode;
     this._bufferSourceNode = this.createBufferSourceNode(buffer);
+    this.onStateChanged = onStateChanged || null;
   }
 
   /**
@@ -120,6 +131,11 @@ export default class AudioSource {
    */
   private setCurrentState(state: AudioSourceState) {
     this.state = state;
+    this.emitStateChange();
+  }
+
+  private emitStateChange() {
+    this.onStateChanged && this.onStateChanged(this.state);
   }
 
   /**

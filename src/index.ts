@@ -1,6 +1,16 @@
 import { Tracklist } from "./tracklistLinkedList";
 import Volume from "./volume";
-import AudioSource from "./audioSource";
+import AudioSource, { AudioSourceState } from "./audioSource";
+
+/**
+ * The state of the audio player
+ *
+ * @typedef {AudioPlayerState}
+ */
+export type AudioPlayerState = Extract<
+  AudioSourceState,
+  "PLAYING" | "PAUSED" | "STOPPED"
+>;
 
 /**
  * Represents the audio tracks loaded into the audio player
@@ -32,6 +42,7 @@ export type AudioPlayerTrack = Omit<Track, "arrayBuffer"> & {
  * @typedef {AudioPlayer}
  */
 export default class AudioPlayer {
+  state: AudioPlayerState = "STOPPED";
   /**
    * Represents the singleton AudioContext
    *
@@ -60,6 +71,18 @@ export default class AudioPlayer {
    * @type {(Volume | undefined)}
    */
   private _volume: Volume | undefined = undefined;
+
+  /**
+   * Event callback that provides the state of the audio player
+   *
+   * @private
+   * @type {((state: AudioPlayerState) => void) | null}
+   */
+  private onStateChanged: ((state: AudioPlayerState) => void) | null = null;
+
+  constructor(args?: { onStateChanged?: (state: AudioPlayerState) => void }) {
+    this.onStateChanged = args?.onStateChanged || null;
+  }
   /**
    * Returns true if the volume is muted
    *
@@ -145,6 +168,30 @@ export default class AudioPlayer {
     }
     return this._volume;
   }
+
+  /**
+   * Emits the status change of the audio source. It only emits
+   * values from the AudioPlayerState.
+   *
+   * @private
+   * @param {AudioSourceState} state
+   */
+  private handleAudioSourceStateChange(state: AudioSourceState) {
+    let emitStateChange = false;
+    switch (state) {
+      case "PAUSED":
+      case "PLAYING":
+      case "STOPPED":
+        this.state = state;
+        emitStateChange = true;
+        break;
+      default:
+        break;
+    }
+    if (emitStateChange && this.onStateChanged) {
+      this.onStateChanged(state as AudioPlayerState);
+    }
+  }
   /**
    * Returns the singleton AudioSource, creates it if it doesn't exist
    *
@@ -158,6 +205,7 @@ export default class AudioPlayer {
         context: this.context(),
         buffer: emptyBuffer,
         gainNode: this.volume().gainNode,
+        onStateChanged: this.handleAudioSourceStateChange.bind(this),
       });
     }
     return this._loadedAudio;
