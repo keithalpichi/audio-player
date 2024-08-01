@@ -1,12 +1,60 @@
+/**
+ * This represents the volume of the audio player
+ *
+ * @export
+ * @class Volume
+ * @typedef {Volume}
+ */
 export default class Volume {
+  /**
+   * An error for invalid volume percentages
+   *
+   * @static
+   * @type {*}
+   */
   static InvalidVolumePercentage = new Error(
     "Invalid volume percentage. Provide 0 up to 1.",
   );
+  /**
+   * The mininum volume value
+   *
+   * @static
+   * @type {number}
+   */
   static MIN = 0;
+  /**
+   * The maximum volume value
+   *
+   * @static
+   * @type {number}
+   */
   static MAX = 1;
+  /**
+   * The Web Audio class that represents volume or gain
+   *
+   * @type {GainNode}
+   */
   gainNode: GainNode;
+  /**
+   * Whether the volume is muted
+   *
+   * @type {boolean}
+   */
   isMuted: boolean;
+  /**
+   * The last known volume value
+   *
+   * @private
+   * @type {number}
+   */
   private lastKnownVolume: number;
+  /**
+   * Creates an instance of Volume.
+   *
+   * @constructor
+   * @param {{ context: AudioContext }} param0
+   * @param {AudioContext} param0.context
+   */
   constructor({ context }: { context: AudioContext }) {
     // set the initial gain to 100%
     this.gainNode = new GainNode(context, { gain: 1 });
@@ -14,14 +62,29 @@ export default class Volume {
     this.isMuted = false;
   }
 
+  /**
+   * Get the current volume
+   *
+   * @readonly
+   * @type {number}
+   */
   get currentVolume(): number {
     return this.gainNode.gain.value;
   }
 
+  /**
+   * Returns true if the current volume is set to the max value
+   *
+   * @readonly
+   * @type {boolean}
+   */
   get atMaxVolume(): boolean {
     return this.currentVolume === Volume.MAX;
   }
 
+  /**
+   * Toggles mute
+   */
   toggleMute(): void {
     if (this.isMuted) {
       this.unmute();
@@ -30,6 +93,9 @@ export default class Volume {
     }
   }
 
+  /**
+   * Mutes volume
+   */
   mute(): void {
     if (this.isMuted) {
       // we're muted, return
@@ -45,6 +111,9 @@ export default class Volume {
     this.isMuted = true;
   }
 
+  /**
+   * Unmutes volume
+   */
   unmute(): void {
     if (!this.isMuted) {
       // we have volume, return
@@ -55,6 +124,11 @@ export default class Volume {
     this.gainNode.gain.value = this.lastKnownVolume;
   }
 
+  /**
+   * Sets the volume to a percentage
+   *
+   * @param {number} percent
+   */
   set(percent: number): void {
     if (!this.isMuted) {
       // we're not muted, the last known value should
@@ -67,6 +141,9 @@ export default class Volume {
     }
   }
 
+  /**
+   * Sets the volume to max value
+   */
   max(): void {
     this.set(Volume.MAX);
   }

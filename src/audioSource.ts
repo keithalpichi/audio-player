@@ -1,3 +1,8 @@
+/**
+ * The state of the audio source
+ *
+ * @typedef {AudioSourceState}
+ */
 type AudioSourceState =
   | "PLAYING"
   | "PAUSED"
@@ -7,16 +12,78 @@ type AudioSourceState =
   | "SEEKING"
   | "SEEKINGTHENPLAY";
 
+/**
+ * This represents the audio source being manipulated by the audio player
+ *
+ * @export
+ * @class AudioSource
+ * @typedef {AudioSource}
+ */
 export default class AudioSource {
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @type {AudioContext}
+   */
   private _context: AudioContext;
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @type {AudioBuffer}
+   */
   private _buffer: AudioBuffer;
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @type {AudioBufferSourceNode}
+   */
   private _bufferSourceNode: AudioBufferSourceNode;
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @type {GainNode}
+   */
   private _gainNode: GainNode;
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @type {number}
+   */
   private _playHead: number = 0;
+  /**
+   * Description placeholder
+   *
+   * @public
+   * @type {AudioSourceState}
+   */
   public state: AudioSourceState = "STOPPED";
+  /**
+   * Description placeholder
+   *
+   * @readonly
+   * @type {number}
+   */
   get duration(): number {
     return this._buffer.duration;
   }
+  /**
+   * Creates an instance of AudioSource.
+   *
+   * @constructor
+   * @param {{
+   *     context: AudioContext;
+   *     buffer: AudioBuffer;
+   *     gainNode: GainNode;
+   *   }} param0
+   * @param {AudioContext} param0.context
+   * @param {AudioBuffer} param0.buffer
+   * @param {GainNode} param0.gainNode
+   */
   constructor({
     context,
     buffer,
@@ -32,16 +99,34 @@ export default class AudioSource {
     this._bufferSourceNode = this.createBufferSourceNode(buffer);
   }
 
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @param {AudioBuffer} buffer
+   * @returns {AudioBufferSourceNode}
+   */
   private createBufferSourceNode(buffer: AudioBuffer): AudioBufferSourceNode {
     return new AudioBufferSourceNode(this._context, {
       buffer,
     });
   }
 
+  /**
+   * Description placeholder
+   *
+   * @private
+   * @param {AudioSourceState} state
+   */
   private setCurrentState(state: AudioSourceState) {
     this.state = state;
   }
 
+  /**
+   * Description placeholder
+   *
+   * @private
+   */
   private ended() {
     switch (this.state) {
       case "SEEKING":
@@ -64,6 +149,12 @@ export default class AudioSource {
     }
   }
 
+  /**
+   * Description placeholder
+   *
+   * @param {AudioBuffer} buffer
+   * @returns {AudioBufferSourceNode}
+   */
   load(buffer: AudioBuffer): AudioBufferSourceNode {
     this._buffer = buffer;
     this._bufferSourceNode = this.createBufferSourceNode(buffer);
@@ -74,6 +165,7 @@ export default class AudioSource {
     return this._bufferSourceNode;
   }
 
+  /** Description placeholder */
   play() {
     if (this.state === "PLAYING") {
       // we're already playing
@@ -86,10 +178,12 @@ export default class AudioSource {
     this.setCurrentState("PLAYING");
   }
 
+  /** Description placeholder */
   resume() {
     this.play();
   }
 
+  /** Description placeholder */
   pause() {
     if (this.state === "PAUSED" || this.state === "STOPPED") {
       return;
@@ -100,6 +194,7 @@ export default class AudioSource {
     this._bufferSourceNode.stop();
   }
 
+  /** Description placeholder */
   stop() {
     if (this.state === "STOPPED") {
       return;
@@ -110,6 +205,11 @@ export default class AudioSource {
     this._bufferSourceNode.stop();
   }
 
+  /**
+   * Description placeholder
+   *
+   * @param {number} to
+   */
   seek(to: number) {
     this.setCurrentState("SEEKING");
     this._playHead = to;
@@ -117,6 +217,11 @@ export default class AudioSource {
     this._bufferSourceNode.stop();
   }
 
+  /**
+   * Description placeholder
+   *
+   * @param {number} to
+   */
   seekAndPlay(to: number) {
     this.setCurrentState("SEEKINGTHENPLAY");
     this._playHead = to;
